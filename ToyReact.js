@@ -54,7 +54,6 @@ export let ToyReact = {
             element = new type();
         }
         /** 2、调用各自的 setAttribute 方法设置属性 */
-
         for (const name in attributes) {
             if (attributes.hasOwnProperty(name)) {
                 const value = attributes[name];
@@ -63,6 +62,7 @@ export let ToyReact = {
         }
         /** 3、插入子元素 */
         insertChildren(element, children);
+        console.log(element);
         return element;
     },
     render(vdom, parent) {
@@ -74,14 +74,15 @@ export class Component {
     constructor() {
         this.children = [];
     }
-    mountTo(parent) {
-        let vdom = this.render();
-        vdom.mountTo(parent);
-    }
     setAttribute(name, value) {
         this[name] = value;
     }
     appendChild(vchild) {
         this.children.push(vchild);
+    }
+    mountTo(parent) {
+        // render 返回的jsx，其实都是一个个 createElement函数
+        let vdom = this.render();
+        vdom.mountTo(parent);
     }
 }
