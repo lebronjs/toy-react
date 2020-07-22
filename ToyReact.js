@@ -3,6 +3,16 @@ class ElementWrapper {
         this.root = document.createElement(type);
     }
     setAttribute(name, value) {
+        if (name.match(/^on([\s\S]+)$/)) {
+            console.log(RegExp.$1);
+            let eventName = RegExp.$1.replace(/^[\s\S]/, (s) =>
+                s.toLocaleLowerCase()
+            );
+            this.root.addEventListener(eventName, value);
+        }
+        if (name === 'className') {
+            name = 'class';
+        }
         this.root.setAttribute(name, value);
     }
     appendChild(vchild) {
@@ -23,9 +33,10 @@ class TextWrapper {
 }
 
 const insertChildren = (element, children) => {
+    console.log(element, children);
     for (const child of children) {
         if (typeof child === 'object' && child instanceof Array) {
-            insertChildren(child);
+            insertChildren(element, child);
         } else {
             if (
                 !(child instanceof Component) &&
@@ -62,7 +73,7 @@ export let ToyReact = {
         }
         /** 3、插入子元素 */
         insertChildren(element, children);
-        console.log(element);
+        //console.log(element);
         return element;
     },
     render(vdom, parent) {
@@ -73,9 +84,11 @@ export let ToyReact = {
 export class Component {
     constructor() {
         this.children = [];
+        this.props = Object.create({ toyname: 'react' });
     }
     setAttribute(name, value) {
         this[name] = value;
+        this.props[name] = value;
     }
     appendChild(vchild) {
         this.children.push(vchild);
@@ -83,6 +96,26 @@ export class Component {
     mountTo(parent) {
         // render 返回的jsx，其实都是一个个 createElement函数
         let vdom = this.render();
+        console.log(vdom);
         vdom.mountTo(parent);
+    }
+    setState(state) {
+        let merge = (oldState, newState) => {
+            for (const p in newState) {
+                if (typeof newState[p] === 'object') {
+                    if (typeof oldState[p] !== 'object') {
+                        oldState[p] = {};
+                    }
+                    merge(oldState[p], newState[p]);
+                } else {
+                    oldState[p] = newState[p];
+                }
+            }
+        };
+        if (!this.state && state) {
+            this.state = {};
+        }
+        console.log(this.state, state);
+        merge(this.state, state);
     }
 }
