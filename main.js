@@ -3,9 +3,8 @@ import { ToyReact, Component } from './ToyReact';
 class Square extends Component {
     constructor(props) {
         super(props);
-        console.log(this.props);
         this.state = {
-            value: 'o',
+            value: null,
             index: this.props.value,
         };
     }
@@ -17,7 +16,7 @@ class Square extends Component {
                     this.setState({ value: 'X' });
                 }}
             >
-                {this.props.value}
+                {this.state.value || this.props.value}
             </button>
         );
     }
@@ -50,34 +49,12 @@ class Board extends Component {
     }
 }
 
-// class MyComponent extends Component {
-//     render() {
-//         return (
-//             <div>
-//                 <h3>湖人总冠军</h3>
-//                 <ul>
-//                     <li id="1">{Number(false)}</li>
-//                     <li id="2">1</li>
-//                     <li id="3">{1 + 1}</li>
-//                     <li id="3">{this.children}</li>
-//                 </ul>
-//             </div>
-//         );
-//     }
-// }
-
 // 先调 ToyReact.createElement 这个方法
 let a = (
     <Board>
         <h2>123</h2>
     </Board>
 );
-
-// let a = (
-//     <MyComponent name="a" id="ida">
-//         <span>lebronjs</span>
-//     </MyComponent>
-// );
 
 // 再调 ToyReact.render 挂载到 body
 ToyReact.render(a, document.body);
