@@ -123,6 +123,7 @@ class Game extends Component {
                     <div>{status}</div>
                     <ol>{moves}</ol>
                 </div>
+                <mark>{this.children}</mark>
             </div>
         );
     }
@@ -130,7 +131,7 @@ class Game extends Component {
 
 // ========================================
 
-ToyReact.render(<Game />, document.body);
+ToyReact.render(<Game>湖人总冠军</Game>, document.body);
 
 function calculateWinner(squares) {
     const lines = [
