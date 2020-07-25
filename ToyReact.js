@@ -1,39 +1,60 @@
 class ElementWrapper {
     constructor(type) {
-        this.root = document.createElement(type);
+        this.type = type;
+        this.props = Object.create(null);
+        this.children = [];
     }
     setAttribute(name, value) {
-        if (name.match(/^on([\s\S]+)$/)) {
-            console.log(RegExp.$1);
-            let eventName = RegExp.$1.replace(/^[\s\S]/, (s) =>
-                s.toLocaleLowerCase()
-            );
-            this.root.addEventListener(eventName, value);
-        }
-        if (name === 'className') {
-            name = 'class';
-        }
-        this.root.setAttribute(name, value);
+        // if (name.match(/^on([\s\S]+)$/)) {
+        //     console.log(RegExp.$1);
+        //     let eventName = RegExp.$1.replace(/^[\s\S]/, (s) =>
+        //         s.toLocaleLowerCase()
+        //     );
+        //     this.root.addEventListener(eventName, value);
+        // }
+        // if (name === 'className') {
+        //     name = 'class';
+        // }
+        this.props[name] = value;
     }
     appendChild(vchild) {
-        let range = document.createRange();
-        if (this.root.children.length) {
-            range.setStartAfter(this.root.lastChild);
-            range.setEndAfter(this.root.lastChild);
-        } else {
-            range.setStart(this.root, 0);
-            range.setEnd(this.root, 0);
-        }
-        vchild.mountTo(range);
+        this.children.push(vchild);
     }
     mountTo(range) {
         range.deleteContents && range.deleteContents();
-        range.insertNode(this.root);
+        let element = document.createElement(this.type);
+        for (let name in this.props) {
+            let value = this.props[name];
+            if (name.match(/^on([\s\S]+)$/)) {
+                console.log(RegExp.$1);
+                let eventName = RegExp.$1.replace(/^[\s\S]/, (s) => s.toLocaleLowerCase());
+                element.addEventListener(eventName, value);
+            }
+            if (name === 'className') {
+                name = 'class';
+            }
+            element.setAttribute(name, value);
+        }
+        for (const child of this.children) {
+            let range = document.createRange();
+            if (element.childNodes.length) {
+                range.setStartAfter(element.lastChild);
+                range.setEndAfter(element.lastChild);
+            } else {
+                range.setStart(element, 0);
+                range.setEnd(element, 0);
+            }
+            child.mountTo(range);
+        }
+        range.insertNode(element);
     }
 }
 
 class TextWrapper {
     constructor(content) {
+        this.type = '#vtext';
+        this.props = Object.create(null);
+        this.children = [];
         this.root = document.createTextNode(content);
     }
     mountTo(range) {
@@ -46,6 +67,10 @@ export class Component {
     constructor() {
         this.children = [];
         this.props = Object.create({ toyname: 'react' });
+        console.log(this.props);
+    }
+    get type() {
+        return this.constructor.name;
     }
     setAttribute(name, value) {
         this[name] = value;
@@ -59,18 +84,57 @@ export class Component {
         this.update();
     }
     update() {
-        this.range.deleteContents && this.range.deleteContents();
         let vdom = this.render();
-        vdom.mountTo(this.range);
+        if (this.oldVdom) {
+            console.log('news', vdom);
+            console.log('old', this.oldVdom);
+            let isSameNode = (node1, node2) => {
+                if (node1.type !== node2.type) {
+                    return false;
+                }
+                if (Object.keys(node1.props).length !== Object.keys(node2.props).length) {
+                    return false;
+                } else {
+                    for (const name in node1.props) {
+                        if (node1.props[name] !== node2.props[name]) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            };
+            let isSameTree = (node1, node2) => {
+                if (!isSameNode(node1, node2)) {
+                    return false;
+                }
+                if (node1.children.length !== node2.children.length) {
+                    return false;
+                }
+                for (let i = 0; i < node1.children.length; i++) {
+                    const child1 = node1.children[i];
+                    const child2 = node2.children[i];
+                    if (!isSameTree(child1, child2)) {
+                        return false;
+                    }
+                    return true;
+                }
+            };
+            if (isSameTree(this.oldVdom, vdom)) {
+                return true;
+            } else {
+                vdom.mountTo(this.range);
+            }
+        } else {
+            vdom.mountTo(this.range);
+        }
+        this.oldVdom = vdom;
     }
     setState(state) {
         let merge = (oldState, newState) => {
             for (const p in newState) {
                 if (typeof newState[p] === 'object' && newState[p]) {
                     if (typeof oldState[p] !== 'object') {
-                        Array.isArray(newState[p])
-                            ? (oldState[p] = [])
-                            : (oldState[p] = {});
+                        Array.isArray(newState[p]) ? (oldState[p] = []) : (oldState[p] = {});
                     }
                     merge(oldState[p], newState[p]);
                 } else {
@@ -107,7 +171,7 @@ export let ToyReact = {
         }
         /** 3、插入子元素 */
         const insertChildren = (element, children) => {
-            //console.log(element, children);
+            console.log('insert:', element, children);
             for (const child of children) {
                 if (typeof child === 'object' && child instanceof Array) {
                     insertChildren(element, child);

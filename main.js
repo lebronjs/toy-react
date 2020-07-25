@@ -1,5 +1,21 @@
 import { ToyReact, Component } from './ToyReact';
 
+class Mycomponent extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            color: 'yellow',
+        };
+    }
+    handleClick() {
+        this.setState({
+            color: this.state.color === 'yellow' ? 'green' : 'yellow',
+        });
+    }
+    render() {
+        return <p onClick={this.handleClick.bind(this)}>点击change颜色：{this.state.color}</p>;
+    }
+}
 class Square extends Component {
     constructor(props) {
         super(props);
@@ -10,7 +26,7 @@ class Square extends Component {
     }
     render() {
         return (
-            <button className="square" onClick={this.props.onClick}>
+            <button className="square" onClick={this.props.onClick.bind(this)}>
                 {this.state.value || this.props.value}
             </button>
         );
@@ -19,12 +35,7 @@ class Square extends Component {
 
 class Board extends Component {
     renderSquare(i) {
-        return (
-            <Square
-                value={this.props.squares[i]}
-                onClick={() => this.props.onClick(i)}
-            />
-        );
+        return <Square value={this.props.squares[i]} onClick={() => this.props.onClick(i)} />;
     }
 
     render() {
@@ -114,16 +125,20 @@ class Game extends Component {
         return (
             <div className="game">
                 <div className="game-board">
-                    <Board
-                        squares={current.squares}
-                        onClick={(i) => this.handleClick(i)}
-                    />
+                    <Board squares={current.squares} onClick={(i) => this.handleClick(i)} />
                 </div>
                 <div className="game-info">
                     <div>{status}</div>
                     <ol>{moves}</ol>
                 </div>
                 <mark>{this.children}</mark>
+                <div className="game-test" style="border:1px green solid;margin-left:20px">
+                    <h3>虚拟dom局部刷新观察区(不会影响旁边游戏的刷新)</h3>
+                    <Mycomponent></Mycomponent>
+                    <Mycomponent></Mycomponent>
+                    <Mycomponent></Mycomponent>
+                    <Mycomponent></Mycomponent>
+                </div>
             </div>
         );
     }
@@ -146,11 +161,7 @@ function calculateWinner(squares) {
     ];
     for (let i = 0; i < lines.length; i++) {
         const [a, b, c] = lines[i];
-        if (
-            squares[a] &&
-            squares[a] === squares[b] &&
-            squares[a] === squares[c]
-        ) {
+        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
             return squares[a];
         }
     }
