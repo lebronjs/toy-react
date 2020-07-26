@@ -5,16 +5,6 @@ class ElementWrapper {
         this.children = [];
     }
     setAttribute(name, value) {
-        // if (name.match(/^on([\s\S]+)$/)) {
-        //     console.log(RegExp.$1);
-        //     let eventName = RegExp.$1.replace(/^[\s\S]/, (s) =>
-        //         s.toLocaleLowerCase()
-        //     );
-        //     this.root.addEventListener(eventName, value);
-        // }
-        // if (name === 'className') {
-        //     name = 'class';
-        // }
         this.props[name] = value;
     }
     appendChild(vchild) {
@@ -23,18 +13,21 @@ class ElementWrapper {
     mountTo(range) {
         range.deleteContents && range.deleteContents();
         let element = document.createElement(this.type);
+        /** 挂载-处理真实dom的属性和事件 */
         for (let name in this.props) {
             let value = this.props[name];
+            // 事件绑定
             if (name.match(/^on([\s\S]+)$/)) {
                 console.log(RegExp.$1);
                 let eventName = RegExp.$1.replace(/^[\s\S]/, (s) => s.toLocaleLowerCase());
                 element.addEventListener(eventName, value);
             }
-            if (name === 'className') {
-                name = 'class';
-            }
+            // className 直接转成 class
+            name === 'className' && (name = 'class');
+            // 原生方法设置属性
             element.setAttribute(name, value);
         }
+        /** 挂载-处理真实dom的子元素 */
         for (const child of this.children) {
             let range = document.createRange();
             if (element.childNodes.length) {
@@ -84,6 +77,7 @@ export class Component {
         this.update();
     }
     update() {
+        /** 虚拟dom核心逻辑 */
         let vdom = this.render();
         if (this.oldVdom) {
             console.log('news', vdom);
@@ -130,6 +124,7 @@ export class Component {
         this.oldVdom = vdom;
     }
     setState(state) {
+        /** 这边实现的是同步的 setState */
         let merge = (oldState, newState) => {
             for (const p in newState) {
                 if (typeof newState[p] === 'object' && newState[p]) {
@@ -147,6 +142,7 @@ export class Component {
         }
         console.log(this.state, state);
         merge(this.state, state);
+        /** 触发当前 component 的更新 */
         this.update();
     }
 }
@@ -195,11 +191,11 @@ export let ToyReact = {
             }
         };
         insertChildren(element, children);
-        //console.log(element);
+        /** 4、返回的是 dom 对象 */
         return element;
     },
     render(vdom, parent) {
-        console.log('toyrender', vdom, parent);
+        /** 从零开始的地方 */
         let range = document.createRange();
         if (parent.children.length) {
             range.setStartAfter(parent.lastChild);
@@ -208,6 +204,7 @@ export let ToyReact = {
             range.setStart(parent, 0);
             range.setEnd(parent, 0);
         }
+        /** 通过 createElement 返回的虚拟dom对象触发挂载 */
         vdom.mountTo(range);
     },
 };
